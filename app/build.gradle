@@ -1,0 +1,42 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 24
+    buildToolsVersion '24.0.0'
+
+    defaultConfig {
+        applicationId "com.google.samples.mysample"
+        minSdkVersion 21
+        targetSdkVersion 24
+        versionCode 1
+        versionName "1.0"
+        jackOptions {
+            enabled true
+        }
+    }
+    buildTypes {
+        debug {
+            multiDexEnabled true
+        }
+        release {
+            multiDexEnabled true
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    compile 'com.google.brillo:brillo-sdk:0.3'
+    compile 'com.google.firebase:firebase-core:9.4.0'
+    compile 'com.google.firebase:firebase-database:9.4.0'
+    compile 'com.google.apis:google-api-services-vision:v1-rev22-1.22.0'
+    compile 'com.google.api-client:google-api-client-android:1.22.0' exclude module: 'httpclient'
+    compile 'com.google.http-client:google-http-client-gson:1.22.0' exclude module: 'httpclient'
+}
+
+apply plugin: 'com.google.gms.google-services'
