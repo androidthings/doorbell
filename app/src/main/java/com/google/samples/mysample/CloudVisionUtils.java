@@ -1,6 +1,6 @@
 package com.google.samples.mysample;
 
-import android.os.AsyncTask;
+import android.graphics.Bitmap;
 import android.util.Log;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -17,6 +17,7 @@ import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,10 +27,21 @@ import java.util.Map;
 public class CloudVisionUtils {
 
     public static final String TAG = "CloudVisionUtils";
+    // TODO(alexlucas) : Remove key before publishing, disable key in console.
     private static final String CLOUD_VISION_API_KEY = "AIzaSyAEW9mLKZKnN-0GSXSeDBaSEQwNo-8ljQg";
 
-    public static Image createImage(byte[] imageBytes) {
+    /**
+     * Below is modified source from the cloud vision sample here:
+     * https://github.com/GoogleCloudPlatform/cloud-vision/blob/master/android/CloudVision/
+     */
+    public static Image createEncodedImage(Bitmap bitmap) {
+        // Create an image and compress it for transport.
         Image image = new Image();
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream);
+        byte[] imageBytes = byteArrayOutputStream.toByteArray();
+
+        // Base64 encode the JPEG
         image.encodeContent(imageBytes);
         return image;
     }
