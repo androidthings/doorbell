@@ -8,8 +8,10 @@ import android.hardware.pio.GpioCallback;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.RemoteException;
 import android.hardware.pio.Gpio;
 import android.hardware.pio.PeripheralManagerService;
+import android.hardware.pio.PioInterruptCallback;
 import android.system.ErrnoException;
 import android.util.Log;
 
@@ -19,7 +21,6 @@ import com.google.firebase.database.ServerValue;
 
 import com.google.api.services.vision.v1.model.Image;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -32,10 +33,8 @@ public class DoorbellActivity extends Activity {
     private static final int IMAGE_WIDTH = 640;
     private static final int IMAGE_HEIGHT = 480;
 
-    /**
-     * The GPIO pin to activate to listen for button presses.
-     */
-    private final String BUTTON_GPIO_PIN = "22";
+    private FirebaseDatabase mDatabase;
+    private Gpio mButtonGpio;
 
     /**
      * A {@link Handler} for running tasks in the background.
@@ -46,36 +45,13 @@ public class DoorbellActivity extends Activity {
      * An additional thread for running tasks that shouldn't block the UI.
      */
     private HandlerThread mBackgroundThread;
+
     /**
-     * Input attached to the doorbell button.
+     * The GPIO pin to activate to listen for button presses.
      */
-    private Gpio mButtonGpio;
-    /**
-     * Synchronized database for doorbell events
-     */
-    private FirebaseDatabase mDatabase;
+    private final String BUTTON_GPIO_PIN = "22";
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        Log.d(TAG, "Headless Activity created.");
-
-        mDatabase = FirebaseDatabase.getInstance();
-
-        startBackgroundThread();
-
-        initializeDoorbellButton();
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-
-        mBackgroundThread.quitSafely();
-
-        mButtonGpio.unregisterGpioCallback(mButtonCallback);
-        mButtonGpio.close();
-    }
+    private PioInterruptCallback mButtonCallback;
 
     /**
      * Starts a background thread and its {@link Handler}.
@@ -87,18 +63,57 @@ public class DoorbellActivity extends Activity {
 
     }
 
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.d(TAG, "Headless Activity created.");
+
+        mDatabase = FirebaseDatabase.getInstance();
+
+        // Creates a new handler and associated thread for handling IO / networking tasks.
+        // Since this is a "headless" app, we don't really need the overhead of AsyncTask, which
+        // is primarily for calling back to the main thread and updating the UI when it's finished.
+        startBackgroundThread();
+
+        // Camera code is complicated, so we've shoved it all in this closet class for you.
+        DoorbellCamera doorbellCamera = DoorbellCamera.getInstance();
+        doorbellCamera.initializeCamera(mBackgroundHandler, createImageAvailableListener(), this);
+
+        initializeDoorbellButton();
+    }
+
     /**
      * Initializes Peripheral manager, which will listen to physical button presses.
      */
     private void initializeDoorbellButton() {
         PeripheralManagerService pioService = new PeripheralManagerService();
         try {
+            // Names of all the GPIO pins on the device.
+            Log.d(TAG, "gpio: " + pioService.getGpioList());
+
             mButtonGpio = pioService.openGpio(BUTTON_GPIO_PIN);
             mButtonGpio.setDirection(Gpio.DIRECTION_IN);
             mButtonGpio.setEdgeTriggerType(Gpio.EDGE_RISING);
             mButtonGpio.registerGpioCallback(mButtonCallback, mBackgroundHandler);
         } catch (ErrnoException e) {
             Log.e(TAG, "gpio error", e);
+        }
+    }
+
+    void onPictureTaken(Bitmap bitmap) {
+        if (bitmap != null) {
+            Image image = CloudVisionUtils.createEncodedImage(bitmap);
+            final DatabaseReference log = mDatabase.getReference("logs").push();
+            // upload image to firebase
+            log.child("timestamp").setValue(ServerValue.TIMESTAMP);
+            log.child("image").setValue(image.getContent());
+
+            // annotate image by uploading to Cloud Vision API
+            Map<String, Float> annotations = CloudVisionUtils.annotateImage(image);
+            Log.d(TAG, "annotations:" + annotations);
+            if (annotations != null) {
+                log.child("annotations").setValue(annotations);
+            }
         }
     }
 
@@ -125,14 +140,7 @@ public class DoorbellActivity extends Activity {
         }
     };
 
-    /**
-     * Capture an image from the camera.
-     * Should be called on the background {@link HandlerThread}.
-     *
-     * @return image frame from the camera.
-     */
-    private Bitmap captureImage() {
-        //TODO: Capture from camera
+    Bitmap capturePlaceholderImage() {
         Drawable placeholder = getDrawable(R.drawable.placeholder);
         Bitmap bitmap = Bitmap.createBitmap(IMAGE_WIDTH, IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
         Canvas canvas = new Canvas(bitmap);
@@ -141,31 +149,14 @@ public class DoorbellActivity extends Activity {
         return bitmap;
     }
 
-    /**
-     * Process a captured camera image using the Vision API.
-     * Should be called on the background {@link HandlerThread}.
-     *
-     * @param bitmap captured image to process.
-     */
-    private void onPictureTaken(Bitmap bitmap) {
-        if (bitmap != null) {
-            try {
-                // Process the image using Cloud Vision
-                Image image = CloudVisionUtils.createEncodedImage(bitmap);
-                Map<String, Float> annotations = CloudVisionUtils.annotateImage(image);
-                Log.d(TAG, "annotations:" + annotations);
-
-                // Write the contents to Firebase
-                final DatabaseReference log = mDatabase.getReference("logs").push();
-                log.child("timestamp").setValue(ServerValue.TIMESTAMP);
-                log.child("image").setValue(image.getContent());
-                if (annotations != null) {
-                    log.child("annotations").setValue(annotations);
-                }
-            } catch (IOException e) {
-                Log.w(TAG, "Unable to annotate image", e);
+    @Override
+    protected void onStop() {
+        if (mButtonGpio != null) {
+            if (mGpioCallback != null) {
+                mButtonGpio.unregisterGpioCallback(mGpioCallback);
             }
-
+            mButtonGpio.close();
         }
+        super.onStop();
     }
 }
