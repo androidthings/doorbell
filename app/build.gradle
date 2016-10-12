@@ -31,7 +31,7 @@ android {
 }
 
 dependencies {
-    compile 'com.google.brillo:iot-sdk:0.2'
+    compile 'com.google.brillo:iot-sdk:0.5'
     compile 'com.google.firebase:firebase-core:9.4.0'
     compile 'com.google.firebase:firebase-database:9.4.0'
 
