@@ -2,6 +2,9 @@ package com.google.samples.mysample;
 
 import java.util.Map;
 
+/**
+ * Model class for Firebase data entries
+ */
 public class DoorbellEntry {
 
     Long timestamp;
