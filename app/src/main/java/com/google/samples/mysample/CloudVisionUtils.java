@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.util.Log;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
-import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
@@ -19,82 +18,81 @@ import com.google.api.services.vision.v1.model.Image;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class CloudVisionUtils {
-
     public static final String TAG = "CloudVisionUtils";
-    // TODO(alexlucas) : Remove key before publishing, disable key in console.
-    private static final String CLOUD_VISION_API_KEY = "AIzaSyAEW9mLKZKnN-0GSXSeDBaSEQwNo-8ljQg";
+
+    private static final String CLOUD_VISION_API_KEY = "<ENTER VISION API KEY>";
 
     /**
-     * Below is modified source from the cloud vision sample here:
-     * https://github.com/GoogleCloudPlatform/cloud-vision/blob/master/android/CloudVision/
+     * Encode an image for transport over HTTP.
+     *
+     * @param bitmap image data to encode
+     * @return encoded image to send to Cloud Vision.
      */
     public static Image createEncodedImage(Bitmap bitmap) {
         // Create an image and compress it for transport.
         Image image = new Image();
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream);
-        byte[] imageBytes = byteArrayOutputStream.toByteArray();
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
+        byte[] imageBytes = stream.toByteArray();
 
         // Base64 encode the JPEG
         image.encodeContent(imageBytes);
         return image;
     }
 
-    public static Map<String, Float> annotateImage(Image image) {
-        try {
-            HttpTransport httpTransport = AndroidHttp.newCompatibleTransport();
-            JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+    /**
+     * Construct an annotated image request for the provided image to be executed
+     * using the provided API interface.
+     *
+     * @param image encoded image to send to Cloud Vision.
+     * @return collection of annotation descriptions and scores.
+     */
+    public static Map<String, Float> annotateImage(Image image) throws IOException {
+        // Construct the Vision API instance
+        HttpTransport httpTransport = AndroidHttp.newCompatibleTransport();
+        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+        VisionRequestInitializer initializer = new VisionRequestInitializer(CLOUD_VISION_API_KEY);
+        Vision vision = new Vision.Builder(httpTransport, jsonFactory, null)
+                .setVisionRequestInitializer(initializer)
+                .build();
 
-            Vision vision = new Vision.Builder(httpTransport, jsonFactory, null)
-                    .setVisionRequestInitializer(
-                            new VisionRequestInitializer(CLOUD_VISION_API_KEY))
-                    .build();
+        // Create the image request
+        AnnotateImageRequest imageRequest = new AnnotateImageRequest();
+        imageRequest.setImage(image);
 
-            BatchAnnotateImagesRequest batchAnnotateImagesRequest =
-                    new BatchAnnotateImagesRequest();
-            batchAnnotateImagesRequest.setRequests(new ArrayList<AnnotateImageRequest>() {{
-                AnnotateImageRequest annotateImageRequest = new AnnotateImageRequest();
-                annotateImageRequest.setImage(image);
+        // Add the features we want
+        Feature labelDetection = new Feature();
+        labelDetection.setType("LABEL_DETECTION");
+        labelDetection.setMaxResults(10);
+        imageRequest.setFeatures(Collections.singletonList(labelDetection));
 
-                // add the features we want
-                annotateImageRequest.setFeatures(new ArrayList<Feature>() {{
-                    Feature labelDetection = new Feature();
-                    labelDetection.setType("LABEL_DETECTION");
-                    labelDetection.setMaxResults(10);
-                    add(labelDetection);
-                }});
+        // Batch and execute the request
+        BatchAnnotateImagesRequest requestBatch = new BatchAnnotateImagesRequest();
+        requestBatch.setRequests(Collections.singletonList(imageRequest));
+        BatchAnnotateImagesResponse response = vision.images()
+                .annotate(requestBatch)
+                // Due to a bug: requests to Vision API containing large images fail when GZipped.
+                .setDisableGZipContent(true)
+                .execute();
 
-                // Add the list of one thing to the request
-                add(annotateImageRequest);
-            }});
-
-            Vision.Images.Annotate annotateRequest =
-                    vision.images().annotate(batchAnnotateImagesRequest);
-            // Due to a bug: requests to Vision API containing large images fail when GZipped.
-            annotateRequest.setDisableGZipContent(true);
-            Log.d(TAG, "created Cloud Vision request object, sending request");
-
-            BatchAnnotateImagesResponse response = annotateRequest.execute();
-
-            Map<String, Float> annotations = convertResponseToMap(response);
-            Log.d(TAG, "Cloud Vision request completed:" + annotations);
-            return annotations;
-        } catch (GoogleJsonResponseException e) {
-            Log.d(TAG, "failed to make API request because " + e.getContent());
-        } catch (IOException e) {
-            Log.d(TAG, "failed to make API request because of other IOException " +
-                    e.getMessage());
-        }
-        return null;
+        return convertResponseToMap(response);
     }
 
+    /**
+     * Process an encoded image and return a collection of vision
+     * annotations describing features of the image data.
+     *
+     * @return collection of annotation descriptions and scores.
+     */
     private static Map<String, Float> convertResponseToMap(BatchAnnotateImagesResponse response) {
+
+        // Convert response into a readable collection of annotations
         Map<String, Float> annotations = new HashMap<>();
         List<EntityAnnotation> labels = response.getResponses().get(0).getLabelAnnotations();
         if (labels != null) {
@@ -102,6 +100,8 @@ public class CloudVisionUtils {
                 annotations.put(label.getDescription(), label.getScore());
             }
         }
+
+        Log.d(TAG, "Cloud Vision request completed:" + annotations);
         return annotations;
     }
 }
