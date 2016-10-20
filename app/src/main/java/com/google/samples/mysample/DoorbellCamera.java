@@ -26,7 +26,7 @@ import static android.content.Context.CAMERA_SERVICE;
  */
 public class DoorbellCamera {
 
-    public static final String TAG = "DoorbellCamera";
+    public static final String TAG = DoorbellCamera.class.getSimpleName();
 
     public CameraCaptureSession mCaptureSession;
 

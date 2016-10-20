@@ -6,13 +6,10 @@ android {
 
     defaultConfig {
         applicationId "com.google.samples.mysample"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 24
         versionCode 1
         versionName "1.0"
-        jackOptions {
-            enabled true
-        }
     }
     buildTypes {
         debug {
@@ -24,16 +21,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
 }
 
 dependencies {
     provided 'com.android.things:androidthings:0.1-preview'
     compile 'com.google.firebase:firebase-core:9.4.0'
     compile 'com.google.firebase:firebase-database:9.4.0'
+    compile 'com.google.androidthings.driver:button:0.3'
 
     compile 'com.google.apis:google-api-services-vision:v1-rev22-1.22.0'
     compile 'com.google.api-client:google-api-client-android:1.22.0' exclude module: 'httpclient'
