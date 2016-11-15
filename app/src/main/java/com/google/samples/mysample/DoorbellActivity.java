@@ -49,7 +49,7 @@ public class DoorbellActivity extends Activity {
     /**
      * The GPIO pin to activate to listen for button presses.
      */
-    private final String BUTTON_GPIO_PIN = "22";
+    private final String BUTTON_GPIO_PIN = "BCM22";
 
     private PioInterruptCallback mButtonCallback;
 
