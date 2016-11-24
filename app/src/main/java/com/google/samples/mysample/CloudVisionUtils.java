@@ -1,6 +1,5 @@
 package com.google.samples.mysample;
 
-import android.graphics.Bitmap;
 import android.util.Log;
 
 import com.google.api.client.extensions.android.http.AndroidHttp;
@@ -16,6 +15,7 @@ import com.google.api.services.vision.v1.model.EntityAnnotation;
 import com.google.api.services.vision.v1.model.Feature;
 import com.google.api.services.vision.v1.model.Image;
 
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
@@ -29,31 +29,13 @@ public class CloudVisionUtils {
     private static final String CLOUD_VISION_API_KEY = "<ENTER VISION API KEY>";
 
     /**
-     * Encode an image for transport over HTTP.
-     *
-     * @param bitmap image data to encode
-     * @return encoded image to send to Cloud Vision.
-     */
-    public static Image createEncodedImage(Bitmap bitmap) {
-        // Create an image and compress it for transport.
-        Image image = new Image();
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream);
-        byte[] imageBytes = stream.toByteArray();
-
-        // Base64 encode the JPEG
-        image.encodeContent(imageBytes);
-        return image;
-    }
-
-    /**
      * Construct an annotated image request for the provided image to be executed
      * using the provided API interface.
      *
-     * @param image encoded image to send to Cloud Vision.
+     * @param imageBytes image bytes in JPEG format.
      * @return collection of annotation descriptions and scores.
      */
-    public static Map<String, Float> annotateImage(Image image) throws IOException {
+    public static Map<String, Float> annotateImage(byte[] imageBytes) throws IOException {
         // Construct the Vision API instance
         HttpTransport httpTransport = AndroidHttp.newCompatibleTransport();
         JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
@@ -64,7 +46,9 @@ public class CloudVisionUtils {
 
         // Create the image request
         AnnotateImageRequest imageRequest = new AnnotateImageRequest();
-        imageRequest.setImage(image);
+        Image img = new Image();
+        img.encodeContent(imageBytes);
+        imageRequest.setImage(img);
 
         // Add the features we want
         Feature labelDetection = new Feature();

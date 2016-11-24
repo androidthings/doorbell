@@ -1,26 +1,23 @@
 package com.google.samples.mysample;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.drawable.Drawable;
 import android.hardware.pio.GpioCallback;
+import android.media.Image;
+import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.RemoteException;
 import android.hardware.pio.Gpio;
 import android.hardware.pio.PeripheralManagerService;
-import android.hardware.pio.PioInterruptCallback;
-import android.system.ErrnoException;
+import android.util.Base64;
 import android.util.Log;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
 
-import com.google.api.services.vision.v1.model.Image;
-
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
@@ -29,29 +26,36 @@ import java.util.Map;
  * Vision API.
  */
 public class DoorbellActivity extends Activity {
-    private static final String TAG = "DoorbellActivity";
-    private static final int IMAGE_WIDTH = 640;
-    private static final int IMAGE_HEIGHT = 480;
+    private static final String TAG = DoorbellActivity.class.getSimpleName();
 
     private FirebaseDatabase mDatabase;
     private Gpio mButtonGpio;
+    private DoorbellCamera mCamera;
 
     /**
-     * A {@link Handler} for running tasks in the background.
+     * A {@link Handler} for running Camera tasks in the background.
      */
     private Handler mBackgroundHandler;
 
     /**
-     * An additional thread for running tasks that shouldn't block the UI.
+     * An additional thread for running Camera tasks that shouldn't block the UI.
      */
     private HandlerThread mBackgroundThread;
+
+    /**
+     * A {@link Handler} for running Cloud tasks in the background.
+     */
+    private Handler mCloudHandler;
+
+    /**
+     * An additional thread for running Cloud tasks that shouldn't block the UI.
+     */
+    private HandlerThread mCloudThread;
 
     /**
      * The GPIO pin to activate to listen for button presses.
      */
     private final String BUTTON_GPIO_PIN = "BCM22";
-
-    private PioInterruptCallback mButtonCallback;
 
     /**
      * Starts a background thread and its {@link Handler}.
@@ -61,6 +65,9 @@ public class DoorbellActivity extends Activity {
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
 
+        mCloudThread = new HandlerThread("CloudThread");
+        mCloudThread.start();
+        mCloudHandler = new Handler(mCloudThread.getLooper());
     }
 
     @Override
@@ -76,8 +83,8 @@ public class DoorbellActivity extends Activity {
         startBackgroundThread();
 
         // Camera code is complicated, so we've shoved it all in this closet class for you.
-        DoorbellCamera doorbellCamera = DoorbellCamera.getInstance();
-        doorbellCamera.initializeCamera(mBackgroundHandler, createImageAvailableListener(), this);
+        mCamera = DoorbellCamera.getInstance();
+        mCamera.initializeCamera(mBackgroundHandler, mOnImageAvailableListener, this);
 
         initializeDoorbellButton();
     }
@@ -94,43 +101,22 @@ public class DoorbellActivity extends Activity {
             mButtonGpio = pioService.openGpio(BUTTON_GPIO_PIN);
             mButtonGpio.setDirection(Gpio.DIRECTION_IN);
             mButtonGpio.setEdgeTriggerType(Gpio.EDGE_RISING);
-            mButtonGpio.registerGpioCallback(mButtonCallback, mBackgroundHandler);
-        } catch (ErrnoException e) {
+            mButtonGpio.registerGpioCallback(mButtonCallback);
+        } catch (IOException e) {
             Log.e(TAG, "gpio error", e);
-        }
-    }
-
-    void onPictureTaken(Bitmap bitmap) {
-        if (bitmap != null) {
-            Image image = CloudVisionUtils.createEncodedImage(bitmap);
-            final DatabaseReference log = mDatabase.getReference("logs").push();
-            // upload image to firebase
-            log.child("timestamp").setValue(ServerValue.TIMESTAMP);
-            log.child("image").setValue(image.getContent());
-
-            // annotate image by uploading to Cloud Vision API
-            Map<String, Float> annotations = CloudVisionUtils.annotateImage(image);
-            Log.d(TAG, "annotations:" + annotations);
-            if (annotations != null) {
-                log.child("annotations").setValue(annotations);
-            }
         }
     }
 
     /**
      * Callback for GPIO button events.
-     * Invoked on the background {@link HandlerThread}.
      */
     private GpioCallback mButtonCallback = new GpioCallback() {
         @Override
         public boolean onGpioEdge(Gpio gpio) {
             // Doorbell rang!
             Log.d(TAG, "button pressed");
-            // Synchronously capture image
-            final Bitmap image = captureImage();
-            Log.d(TAG, "image captured");
-            // Post task to annotate and upload image
-            mBackgroundHandler.post(() -> onPictureTaken(image));
+
+            mCamera.takePicture();
             return true;
         }
 
@@ -140,22 +126,52 @@ public class DoorbellActivity extends Activity {
         }
     };
 
-    Bitmap capturePlaceholderImage() {
-        Drawable placeholder = getDrawable(R.drawable.placeholder);
-        Bitmap bitmap = Bitmap.createBitmap(IMAGE_WIDTH, IMAGE_HEIGHT, Bitmap.Config.ARGB_8888);
-        Canvas canvas = new Canvas(bitmap);
-        placeholder.setBounds(0, 0, IMAGE_WIDTH, IMAGE_HEIGHT);
-        placeholder.draw(canvas);
-        return bitmap;
-    }
+    /**
+     * Listener for new camera images.
+     */
+    private ImageReader.OnImageAvailableListener mOnImageAvailableListener =
+            (ImageReader reader) -> {
+                final DatabaseReference log = mDatabase.getReference("logs").push();
+                Image image = reader.acquireLatestImage();
+                // get image bytes
+                ByteBuffer imageBuf = image.getPlanes()[0].getBuffer();
+                final byte[] imageBytes = new byte[imageBuf.remaining()];
+                imageBuf.get(imageBytes);
+                image.close();
+                String imageStr = Base64.encodeToString(imageBytes, Base64.NO_WRAP | Base64.URL_SAFE);
+                // upload image to firebase
+                log.child("timestamp").setValue(ServerValue.TIMESTAMP);
+                log.child("image").setValue(imageStr);
+
+                mCloudHandler.post(() -> {
+                    Log.d(TAG, "sending image to cloud vision");
+                    // annotate image by uploading to Cloud Vision API
+                    try {
+                        Map<String, Float> annotations = CloudVisionUtils.annotateImage(imageBytes);
+                        Log.d(TAG, "cloud vision annotations:" + annotations);
+                        if (annotations != null) {
+                            log.child("annotations").setValue(annotations);
+                        }
+                    } catch (IOException e) {
+                        Log.e(TAG, "Cloud Vison API error: ", e);
+                    }
+                });
+            };
+
 
     @Override
     protected void onStop() {
         if (mButtonGpio != null) {
-            if (mGpioCallback != null) {
-                mButtonGpio.unregisterGpioCallback(mGpioCallback);
+            if (mButtonCallback != null) {
+                mButtonGpio.unregisterGpioCallback(mButtonCallback);
             }
-            mButtonGpio.close();
+            try {
+                mButtonGpio.close();
+            } catch (IOException e) {
+                Log.e(TAG, "gpio error: ", e);
+            } finally {
+                 mButtonGpio = null;
+            }
         }
         super.onStop();
     }

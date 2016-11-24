@@ -124,7 +124,7 @@ public class DoorbellCamera {
 
         final int IMAGE_WIDTH = 320;
         final int IMAGE_HEIGHT = 240;
-        final int maxImages = 1; // Number of images that can be read concurrently, not total.
+        final int maxImages = 2; // Number of images that can be read concurrently, not total.
 
         mBackgroundHandler = backgroundHandler;
 
