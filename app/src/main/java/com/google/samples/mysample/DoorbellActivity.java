@@ -1,17 +1,17 @@
 package com.google.samples.mysample;
 
 import android.app.Activity;
-import android.hardware.pio.GpioCallback;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.hardware.pio.Gpio;
-import android.hardware.pio.PeripheralManagerService;
 import android.util.Base64;
 import android.util.Log;
 
+import com.google.androidthings.pio.Gpio;
+import com.google.androidthings.pio.GpioCallback;
+import com.google.androidthings.pio.PeripheralManagerService;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;

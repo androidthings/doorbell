@@ -4,9 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
-import android.graphics.Matrix;
 import android.media.Image;
-import android.util.DisplayMetrics;
 import android.util.Log;
 
 import java.io.File;
