@@ -1,4 +1,4 @@
-package com.google.samples.mysample;
+package com.example.androidthings.doorbell;
 
 import android.content.Context;
 import android.graphics.ImageFormat;

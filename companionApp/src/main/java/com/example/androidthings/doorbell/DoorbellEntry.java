@@ -1,4 +1,4 @@
-package com.google.samples.mysample;
+package com.example.androidthings.doorbell;
 
 import java.util.Map;
 

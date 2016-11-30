@@ -1,20 +1,12 @@
-package com.google.samples.mysample;
+package com.example.androidthings.doorbell;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
-import android.text.TextUtils;
-import android.text.format.DateUtils;
-import android.util.Base64;
 import android.support.v7.widget.RecyclerView;
 
-import com.firebase.ui.database.FirebaseRecyclerAdapter;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-
-import java.util.ArrayList;
 
 public class MainActivity extends Activity {
     private static final String TAG = "MainActivity";

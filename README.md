@@ -1,15 +1,30 @@
-Brillo empty sample template
+Android Things Doorbell sample
 =====================================
 
-Use this empty project as a template for your Brillo 2 project.
+The Android Things Doorbell sample demonstrates how to create a “smart” doorbell.
+The sample captures a button press from a user, obtains an image via a camera peripheral,
+processes the image data using Google’s Cloud Vision API, and uploads the image, Cloud Vision
+annotations and metadata to a Firebase database where it can be viewed by a companion app.
 
 
 Pre-requisites
 --------------
 
-- Intel Edison
-- Brillo 2.0
-- ...
+- Android Things compatible board
+- Android Things compatible camera (for example, the Raspberry Pi 3 camera module)
+- Android Studio 2.2+
+- "Google Repository" from the Android SDK Manager
+- Google Cloud project with Cloud Vision API enabled
+- Firebase database
+
+
+Build and install
+=================
+
+1. Add a valid Google CloudVision API key in the constant CloudVisionUtils.CLOUD_VISION_API_KEY
+2. Add a valid google-services.json from Firebase to app/ and companionApp/
+
+
 
 Schematics
 ----------
