@@ -41,7 +41,7 @@ public class DoorbellEntryAdapter extends FirebaseRecyclerAdapter<DoorbellEntry,
     /**
      * ViewHolder for each doorbell entry
      */
-    static class DoorbellEntryViewHolder extends RecyclerView.ViewHolder {
+    public static class DoorbellEntryViewHolder extends RecyclerView.ViewHolder {
 
         public final ImageView image;
         public final TextView time;

@@ -15,7 +15,9 @@
  */
 package com.example.androidthings.doorbell;
 
+import android.Manifest;
 import android.app.Activity;
+import android.content.pm.PackageManager;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
@@ -80,6 +82,14 @@ public class DoorbellActivity extends Activity {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "Doorbell Activity created.");
 
+        // We need permission to access the camera
+        if (checkSelfPermission(Manifest.permission.CAMERA)
+                != PackageManager.PERMISSION_GRANTED) {
+            // A problem occurred auto-granting the permission
+            Log.d(TAG, "No permission");
+            return;
+        }
+
         mDatabase = FirebaseDatabase.getInstance();
 
         // Creates new handlers and associated threads for camera and networking operations.
@@ -100,13 +110,14 @@ public class DoorbellActivity extends Activity {
         }
         // Camera code is complicated, so we've shoved it all in this closet class for you.
         mCamera = DoorbellCamera.getInstance();
-        mCamera.initializeCamera(mCameraHandler, mOnImageAvailableListener, this);
+        mCamera.initializeCamera(this, mCameraHandler, mOnImageAvailableListener);
     }
 
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        mCamera.shutDown();
 
         mCameraThread.quitSafely();
         mCloudThread.quitSafely();
@@ -135,16 +146,27 @@ public class DoorbellActivity extends Activity {
     /**
      * Listener for new camera images.
      */
-    private ImageReader.OnImageAvailableListener mOnImageAvailableListener = new ImageReader.OnImageAvailableListener() {
+    private ImageReader.OnImageAvailableListener mOnImageAvailableListener =
+            new ImageReader.OnImageAvailableListener() {
         @Override
         public void onImageAvailable(ImageReader reader) {
-            final DatabaseReference log = mDatabase.getReference("logs").push();
             Image image = reader.acquireLatestImage();
             // get image bytes
             ByteBuffer imageBuf = image.getPlanes()[0].getBuffer();
             final byte[] imageBytes = new byte[imageBuf.remaining()];
             imageBuf.get(imageBytes);
             image.close();
+
+            onPictureTaken(imageBytes);
+        }
+    };
+
+    /**
+     * Handle image processing in Firebase and Cloud Vision.
+     */
+    private void onPictureTaken(final byte[] imageBytes) {
+        if (imageBytes != null) {
+            final DatabaseReference log = mDatabase.getReference("logs").push();
             String imageStr = Base64.encodeToString(imageBytes, Base64.NO_WRAP | Base64.URL_SAFE);
             // upload image to firebase
             log.child("timestamp").setValue(ServerValue.TIMESTAMP);
@@ -167,5 +189,5 @@ public class DoorbellActivity extends Activity {
                 }
             });
         }
-    };
+    }
 }
