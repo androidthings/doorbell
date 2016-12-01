@@ -18,12 +18,44 @@ Pre-requisites
 - Firebase database
 
 
-Build and install
-=================
+Setup and Build
+===============
 
-1. Add a valid Google CloudVision API key in the constant CloudVisionUtils.CLOUD_VISION_API_KEY
-2. Add a valid google-services.json from Firebase to app/ and companionApp/
+To setup, follow these steps below.
 
+1. Add a valid Google Cloud Vision API key in the constant `CloudVisionUtils.CLOUD_VISION_API_KEY`
+ - Create a Google Cloud Platform (GCP) project on [GCP Console](https://console.cloud.google.com/)
+ - Enable Cloud Vision API under Library
+ - Add an API key under Credentials
+ - Copy and paste the Cloud Vision API key to the constant in `CloudVisionUtils.java`
+
+2. Add a valid `google-services.json` from Firebase to `app/` and
+   `companionApp/`
+ - Create a Firebase project on [Firebase Console](https://console.firebase.google.com)
+ - Add an Android app with your specific package name in the project
+ - Download the auto-generated `google-services.json` and save to `app/` and `companionApp/` folders
+
+There are two modules: `app` and `companionApp`, the former is on device while the latter on
+companion device e.g. Android phone.
+
+
+Running
+=======
+
+To run the `app` module on an Android Things board:
+
+1. Connect a push button to your device's GPIO pin according to the schematics below
+2. Deploy and run the `app` module
+3. Take a picture by pushing the button
+4. Verify from Firebase Console that pictures are uploaded to a log in the Firebase database
+   of your project
+5. Verify from Firebase Console that the uploaded pictures in the log get annotations after
+   a small delay from the GCP Cloud Vision
+
+To run the `companionApp` module on your Android phone:
+
+1. Deploy and run the `companionApp` module
+2. Verify that you see a new annotated picture everytime you push the button
 
 
 Schematics
