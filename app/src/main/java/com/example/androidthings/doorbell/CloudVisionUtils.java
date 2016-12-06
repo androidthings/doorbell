@@ -41,6 +41,10 @@ public class CloudVisionUtils {
 
     private static final String CLOUD_VISION_API_KEY = "<ENTER VISION API KEY>";
 
+    private static final String LABEL_DETECTION = "LABEL_DETECTION";
+
+    private static final int MAX_LABEL_RESULTS = 10;
+
     /**
      * Construct an annotated image request for the provided image to be executed
      * using the provided API interface.
@@ -65,8 +69,8 @@ public class CloudVisionUtils {
 
         // Add the features we want
         Feature labelDetection = new Feature();
-        labelDetection.setType("LABEL_DETECTION");
-        labelDetection.setMaxResults(10);
+        labelDetection.setType(LABEL_DETECTION);
+        labelDetection.setMaxResults(MAX_LABEL_RESULTS);
         imageRequest.setFeatures(Collections.singletonList(labelDetection));
 
         // Batch and execute the request
