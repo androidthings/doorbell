@@ -24,7 +24,6 @@ import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
 
-
 import com.google.android.things.contrib.driver.button.Button;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
