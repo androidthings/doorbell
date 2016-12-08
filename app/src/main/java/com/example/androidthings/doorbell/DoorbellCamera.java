@@ -79,6 +79,28 @@ public class DoorbellCamera {
         }
     };
 
+    private final CameraCaptureSession.CaptureCallback mCaptureCallback =
+            new CameraCaptureSession.CaptureCallback() {
+
+                @Override
+                public void onCaptureProgressed(CameraCaptureSession session,
+                                                CaptureRequest request,
+                                                CaptureResult partialResult) {
+                    Log.d(TAG, "Partial result");
+                }
+
+                @Override
+                public void onCaptureCompleted(CameraCaptureSession session,
+                                               CaptureRequest request,
+                                               TotalCaptureResult result) {
+                    if (session != null) {
+                        session.close();
+                        mCaptureSession = null;
+                        Log.d(TAG, "CaptureSession closed");
+                    }
+                }
+            };
+
     // Lazy-loaded singleton, so only one instance of the camera is created.
     private DoorbellCamera() {
     }
@@ -132,34 +154,6 @@ public class DoorbellCamera {
     public void takePicture() {
         // Here, we create a CameraCaptureSession for capturing still images.
         try {
-            final CaptureRequest.Builder captureBuilder =
-                    mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            captureBuilder.addTarget(mImageReader.getSurface());
-            captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
-            captureBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
-
-            final CameraCaptureSession.CaptureCallback captureCallback =
-                    new CameraCaptureSession.CaptureCallback() {
-
-                        @Override
-                        public void onCaptureProgressed(CameraCaptureSession session,
-                                                        CaptureRequest request,
-                                                        CaptureResult partialResult) {
-                            Log.d(TAG, "Partial result");
-                        }
-
-                        @Override
-                        public void onCaptureCompleted(CameraCaptureSession session,
-                                                       CaptureRequest request,
-                                                       TotalCaptureResult result) {
-                            if (session != null) {
-                                session.close();
-                                mCaptureSession = null;
-                                Log.d(TAG, "CaptureSession closed");
-                            }
-                        }
-                    };
-
             mCameraDevice.createCaptureSession(Collections.singletonList(mImageReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
                         @Override
@@ -171,7 +165,12 @@ public class DoorbellCamera {
                             try {
                                 // When the session is ready, we start capture.
                                 mCaptureSession = cameraCaptureSession;
-                                mCaptureSession.capture(captureBuilder.build(), captureCallback, null);
+                                final CaptureRequest.Builder captureBuilder =
+                                        mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                                captureBuilder.addTarget(mImageReader.getSurface());
+                                captureBuilder.set(CaptureRequest.CONTROL_AE_MODE, CaptureRequest.CONTROL_AE_MODE_ON);
+                                captureBuilder.set(CaptureRequest.CONTROL_AWB_MODE, CaptureRequest.CONTROL_AWB_MODE_AUTO);
+                                mCaptureSession.capture(captureBuilder.build(), mCaptureCallback, null);
                             } catch (CameraAccessException cae) {
                                 Log.d(TAG, "camera capture exception");
                             }
