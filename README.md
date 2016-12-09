@@ -16,7 +16,17 @@ Pre-requisites
 - "Google Repository" from the Android SDK Manager
 - Google Cloud project with Cloud Vision API enabled
 - Firebase database
+- The following individual components:
+    - 1 push button
+    - 1 resistor
+    - jumper wires
+    - 1 breadboard
 
+
+Schematics
+----------
+
+![Schematics](schematics.png)
 
 Setup and Build
 ===============
@@ -57,11 +67,6 @@ To run the `companionApp` module on your Android phone:
 1. Deploy and run the `companionApp` module
 2. Verify that you see a new annotated picture everytime you push the button
 
-
-Schematics
-----------
-
-![Sample schematics](sample_schematics.png)
 
 License
 -------
