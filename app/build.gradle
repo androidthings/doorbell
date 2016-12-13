@@ -24,7 +24,7 @@ android {
 }
 
 dependencies {
-    provided 'com.google.android.things:androidthings:0.1-preview'
+    provided 'com.google.android.things:androidthings:0.1-devpreview'
     compile 'com.google.firebase:firebase-core:9.4.0'
     compile 'com.google.firebase:firebase-database:9.4.0'
     compile 'com.google.android.things.contrib:driver-button:0.1'
