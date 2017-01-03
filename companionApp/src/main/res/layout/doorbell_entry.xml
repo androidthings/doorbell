@@ -10,7 +10,7 @@
     <ImageView
         android:layout_width="220dp"
         android:layout_height="match_parent"
-        android:id="@+id/imageView1" />
+        android:id="@+id/imageViewCapture" />
 
     <LinearLayout
         android:orientation="vertical"
@@ -22,11 +22,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textStyle="bold"
-            android:id="@+id/textView1" />
+            android:id="@+id/textViewTimestamp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:id="@+id/textView2" />
+            android:id="@+id/textViewMetadata" />
     </LinearLayout>
 </LinearLayout>

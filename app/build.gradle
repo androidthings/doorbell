@@ -1,13 +1,13 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion '24.0.3'
+    compileSdkVersion 25
+    buildToolsVersion '25.0.1'
 
     defaultConfig {
         applicationId "com.example.androidthings.doorbell"
         minSdkVersion 24
-        targetSdkVersion 24
+        targetSdkVersion 25
         versionCode 1
         versionName "1.0"
     }
@@ -25,8 +25,8 @@ android {
 
 dependencies {
     provided 'com.google.android.things:androidthings:0.1-devpreview'
-    compile 'com.google.firebase:firebase-core:9.4.0'
-    compile 'com.google.firebase:firebase-database:9.4.0'
+    compile "com.google.firebase:firebase-core:${firebaseVersion}"
+    compile "com.google.firebase:firebase-database:${firebaseVersion}"
     compile 'com.google.android.things.contrib:driver-button:0.1'
 
     compile 'com.google.apis:google-api-services-vision:v1-rev22-1.22.0'
