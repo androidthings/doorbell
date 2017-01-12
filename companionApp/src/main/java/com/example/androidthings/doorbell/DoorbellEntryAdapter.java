@@ -50,9 +50,9 @@ public class DoorbellEntryAdapter extends FirebaseRecyclerAdapter<DoorbellEntry,
         public DoorbellEntryViewHolder(View itemView) {
             super(itemView);
 
-            this.image = (ImageView) itemView.findViewById(R.id.imageView1);
-            this.time = (TextView) itemView.findViewById(R.id.textView1);
-            this.metadata = (TextView) itemView.findViewById(R.id.textView2);
+            this.image = (ImageView) itemView.findViewById(R.id.imageViewCapture);
+            this.time = (TextView) itemView.findViewById(R.id.textViewTimestamp);
+            this.metadata = (TextView) itemView.findViewById(R.id.textViewMetadata);
         }
     }
 
