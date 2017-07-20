@@ -25,8 +25,10 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
+import android.view.KeyEvent;
 
 import com.google.android.things.contrib.driver.button.Button;
+import com.google.android.things.contrib.driver.button.ButtonInputDriver;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
@@ -49,7 +51,7 @@ public class DoorbellActivity extends Activity {
     /*
      * Driver for the doorbell button;
      */
-    private Button mButton;
+    private ButtonInputDriver mButton;
 
     /**
      * A {@link Handler} for running Camera tasks in the background.
@@ -103,8 +105,8 @@ public class DoorbellActivity extends Activity {
 
         // Initialize the doorbell button driver
         try {
-            mButton = new Button(BUTTON_GPIO_PIN, Button.LogicState.PRESSED_WHEN_LOW);
-            mButton.setOnButtonEventListener(mButtonCallback);
+            mButton = new ButtonInputDriver(BUTTON_GPIO_PIN,
+                Button.LogicState.PRESSED_WHEN_LOW, KeyEvent.KEYCODE_ENTER);
         } catch (IOException e) {
             Log.e(TAG, "button driver error", e);
         }
@@ -112,7 +114,6 @@ public class DoorbellActivity extends Activity {
         mCamera = DoorbellCamera.getInstance();
         mCamera.initializeCamera(this, mCameraHandler, mOnImageAvailableListener);
     }
-
 
     @Override
     protected void onDestroy() {
@@ -128,20 +129,16 @@ public class DoorbellActivity extends Activity {
         }
     }
 
-    /**
-     * Callback for button events.
-     */
-    private Button.OnButtonEventListener mButtonCallback = new Button.OnButtonEventListener() {
-        @Override
-
-        public void onButtonEvent(Button button, boolean pressed) {
-            if (pressed) {
-                // Doorbell rang!
-                Log.d(TAG, "button pressed");
-                mCamera.takePicture();
-            }
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_ENTER) {
+            // Doorbell rang!
+            Log.d(TAG, "button pressed");
+            mCamera.takePicture();
+            return true;
         }
-    };
+        return super.onKeyUp(keyCode, event);
+    }
 
     /**
      * Listener for new camera images.
