@@ -1,14 +1,15 @@
-Android Things Doorbell sample
-=====================================
+# Android Things Doorbell sample
 
 The Android Things Doorbell sample demonstrates how to create a “smart” doorbell.
 The sample captures a button press from a user, obtains an image via a camera peripheral,
 processes the image data using Google’s Cloud Vision API, and uploads the image, Cloud Vision
 annotations and metadata to a Firebase database where it can be viewed by a companion app.
 
+## Screenshots
 
-Pre-requisites
---------------
+![Schematics](schematics.png)
+
+## Pre-requisites
 
 - Android Things compatible board
 - Android Things compatible camera (for example, the Raspberry Pi 3 camera module)
@@ -22,14 +23,7 @@ Pre-requisites
     - jumper wires
     - 1 breadboard
 
-
-Schematics
-----------
-
-![Schematics](schematics.png)
-
-Setup and Build
-===============
+## Setup and Build
 
 To setup, follow these steps below.
 
@@ -48,9 +42,7 @@ To setup, follow these steps below.
 There are two modules: `app` and `companionApp`, the former is on device while the latter on
 companion device e.g. Android phone.
 
-
-Running
-=======
+## Running
 
 To run the `app` module on an Android Things board:
 
@@ -69,9 +61,19 @@ To run the `companionApp` module on your Android phone:
 1. Deploy and run the `companionApp` module
 2. Verify that you see a new annotated picture everytime you push the button
 
+## Categories
 
-License
--------
+- Android Things
+
+## Solutions
+
+- IoT
+
+## Languages
+
+- Java
+
+## License
 
 Copyright 2016 The Android Open Source Project, Inc.
 
