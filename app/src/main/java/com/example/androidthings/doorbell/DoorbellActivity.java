@@ -51,7 +51,7 @@ public class DoorbellActivity extends Activity {
     /*
      * Driver for the doorbell button;
      */
-    private ButtonInputDriver mButton;
+    private ButtonInputDriver mButtonInputDriver;
 
     /**
      * A {@link Handler} for running Camera tasks in the background.
@@ -72,12 +72,6 @@ public class DoorbellActivity extends Activity {
      * An additional thread for running Cloud tasks that shouldn't block the UI.
      */
     private HandlerThread mCloudThread;
-
-    /**
-     * The GPIO pin to activate to listen for button presses.
-     */
-    private final String BUTTON_GPIO_PIN = "BCM21";
-
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -104,15 +98,24 @@ public class DoorbellActivity extends Activity {
         mCloudHandler = new Handler(mCloudThread.getLooper());
 
         // Initialize the doorbell button driver
-        try {
-            mButton = new ButtonInputDriver(BUTTON_GPIO_PIN,
-                Button.LogicState.PRESSED_WHEN_LOW, KeyEvent.KEYCODE_ENTER);
-        } catch (IOException e) {
-            Log.e(TAG, "button driver error", e);
-        }
+        initPIO();
+
         // Camera code is complicated, so we've shoved it all in this closet class for you.
         mCamera = DoorbellCamera.getInstance();
         mCamera.initializeCamera(this, mCameraHandler, mOnImageAvailableListener);
+    }
+
+    private void initPIO() {
+        try {
+            mButtonInputDriver = new ButtonInputDriver(
+                    BoardDefaults.getGPIOForButton(),
+                    Button.LogicState.PRESSED_WHEN_LOW,
+                    KeyEvent.KEYCODE_ENTER);
+            mButtonInputDriver.register();
+        } catch (IOException e) {
+            mButtonInputDriver = null;
+            Log.w(TAG, "Could not open GPIO pins", e);
+        }
     }
 
     @Override
@@ -123,7 +126,7 @@ public class DoorbellActivity extends Activity {
         mCameraThread.quitSafely();
         mCloudThread.quitSafely();
         try {
-            mButton.close();
+            mButtonInputDriver.close();
         } catch (IOException e) {
             Log.e(TAG, "button driver error", e);
         }
