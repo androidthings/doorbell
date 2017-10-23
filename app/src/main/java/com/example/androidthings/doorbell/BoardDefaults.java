@@ -41,7 +41,7 @@ public class BoardDefaults {
             case DEVICE_RPI3:
                 return "BCM21";
             case DEVICE_IMX7D_PICO:
-                return "GPIO_174";
+                return "GPIO6_IO14";
             default:
                 throw new IllegalStateException("Unknown Build.DEVICE " + Build.DEVICE);
         }
