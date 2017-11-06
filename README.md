@@ -48,8 +48,6 @@ To run the `app` module on an Android Things board:
 
 1. Connect a push button to your device's GPIO pin according to the schematics below
 2. Deploy and run the `app` module
- - Reboot the Android Things board in order to grant the camera permission (this is a [known
-   issue][dp1_release_notes] with Developer Preview 1)
 3. Take a picture by pushing the button
 4. Verify from Firebase Console that pictures are uploaded to a log in the Firebase database
    of your project
@@ -59,7 +57,7 @@ To run the `app` module on an Android Things board:
 To run the `companionApp` module on your Android phone:
 
 1. Deploy and run the `companionApp` module
-2. Verify that you see a new annotated picture everytime you push the button
+2. Verify that you see a new annotated picture every time you push the button
 
 ## Categories
 
@@ -91,5 +89,3 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
 License for the specific language governing permissions and limitations under
 the License.
-
-[dp1_release_notes]: https://developer.android.com/things/preview/releases.html#developer_preview_1
