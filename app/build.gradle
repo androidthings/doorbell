@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion '25.0.2'
+    compileSdkVersion 26
+    buildToolsVersion '26.0.2'
 
     defaultConfig {
         applicationId "com.example.androidthings.doorbell"
-        minSdkVersion 24
+        minSdkVersion 26
         targetSdkVersion 25
         versionCode 1
         versionName "1.0"
@@ -20,14 +20,14 @@ android {
 }
 
 dependencies {
-    provided 'com.google.android.things:androidthings:0.4-devpreview'
-    compile 'com.google.firebase:firebase-core:11.4.2'
-    compile 'com.google.firebase:firebase-database:11.4.2'
-    compile 'com.google.android.things.contrib:driver-button:0.3'
+    compileOnly 'com.google.android.things:androidthings:0.6-devpreview'
+    implementation 'com.google.firebase:firebase-core:11.4.2'
+    implementation 'com.google.firebase:firebase-database:11.4.2'
+    implementation 'com.google.android.things.contrib:driver-button:0.3'
 
-    compile 'com.google.apis:google-api-services-vision:v1-rev22-1.22.0'
-    compile 'com.google.api-client:google-api-client-android:1.22.0' exclude module: 'httpclient'
-    compile 'com.google.http-client:google-http-client-gson:1.22.0' exclude module: 'httpclient'
+    implementation 'com.google.apis:google-api-services-vision:v1-rev22-1.22.0'
+    implementation 'com.google.api-client:google-api-client-android:1.22.0' exclude module: 'httpclient'
+    implementation 'com.google.http-client:google-http-client-gson:1.22.0' exclude module: 'httpclient'
 }
 
 apply plugin: 'com.google.gms.google-services'
