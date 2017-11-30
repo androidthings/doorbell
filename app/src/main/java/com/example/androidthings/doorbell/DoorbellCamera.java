@@ -78,10 +78,10 @@ public class DoorbellCamera {
         try {
             camIds = manager.getCameraIdList();
         } catch (CameraAccessException e) {
-            Log.d(TAG, "Cam access exception getting IDs", e);
+            Log.e(TAG, "Cam access exception getting IDs", e);
         }
         if (camIds.length < 1) {
-            Log.d(TAG, "No cameras found");
+            Log.e(TAG, "No cameras found");
             return;
         }
         String id = camIds[0];
@@ -135,7 +135,7 @@ public class DoorbellCamera {
      */
     public void takePicture() {
         if (mCameraDevice == null) {
-            Log.w(TAG, "Cannot capture image. Camera not initialized.");
+            Log.e(TAG, "Cannot capture image. Camera not initialized.");
             return;
         }
 
@@ -146,7 +146,7 @@ public class DoorbellCamera {
                     mSessionCallback,
                     null);
         } catch (CameraAccessException cae) {
-            Log.d(TAG, "access exception while preparing pic", cae);
+            Log.e(TAG, "access exception while preparing pic", cae);
         }
     }
 
@@ -169,7 +169,7 @@ public class DoorbellCamera {
 
                 @Override
                 public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-                    Log.w(TAG, "Failed to configure camera");
+                    Log.e(TAG, "Failed to configure camera");
                 }
             };
 
@@ -185,7 +185,7 @@ public class DoorbellCamera {
             Log.d(TAG, "Session initialized.");
             mCaptureSession.capture(captureBuilder.build(), mCaptureCallback, null);
         } catch (CameraAccessException cae) {
-            Log.d(TAG, "camera capture exception");
+            Log.e(TAG, "camera capture exception", cae);
         }
     }
 

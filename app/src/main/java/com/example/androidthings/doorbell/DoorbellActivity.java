@@ -89,7 +89,7 @@ public class DoorbellActivity extends Activity {
         if (checkSelfPermission(Manifest.permission.CAMERA)
                 != PackageManager.PERMISSION_GRANTED) {
             // A problem occurred auto-granting the permission
-            Log.d(TAG, "No permission");
+            Log.e(TAG, "No permission");
             return;
         }
 
