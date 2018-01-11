@@ -59,6 +59,9 @@ public class DoorbellActivity extends Activity {
     private TextView[] mResultViews;
     private Map<String, Float> mAnnotations;
 
+    private enum ActivityState { STARTING, IDLING, IMAGING, LABELLING, DISPLAYING };
+    private ActivityState mState = ActivityState.STARTING;
+
     /*
      * Driver for the doorbell button;
      */
@@ -122,6 +125,7 @@ public class DoorbellActivity extends Activity {
         mCamera = DoorbellCamera.getInstance();
         mCamera.initializeCamera(this, mCameraHandler, mOnImageAvailableListener);
 
+        mState = ActivityState.IDLING;
         resetDisplayMsg("Welcome! Press the button to check-in for this event.");
     }
 
@@ -172,6 +176,9 @@ public class DoorbellActivity extends Activity {
         if (keyCode == KeyEvent.KEYCODE_ENTER) {
             // Doorbell rang!
             Log.d(TAG, "button pressed");
+
+            if (mState != ActivityState.IDLING) return true;
+            mState = ActivityState.IMAGING;
             resetDisplayMsg("Capturing image ...");
             mCamera.takePicture();
             return true;
@@ -226,6 +233,8 @@ public class DoorbellActivity extends Activity {
             log.child("timestamp").setValue(ServerValue.TIMESTAMP);
             log.child("image").setValue(imageStr);
 
+            if (mState != ActivityState.IMAGING) return;
+            mState = ActivityState.LABELLING;
             resetDisplayMsg("Sending image to Google Cloud Vision API for labelling ... PLEASE WAIT.");
             mCloudHandler.post(new Runnable() {
                 @Override
@@ -251,11 +260,15 @@ public class DoorbellActivity extends Activity {
                                     }
                                 }
                             });
-
                             log.child("annotations").setValue(mAnnotations);
 
+                            if (mState != ActivityState.LABELLING) return;
+                            mState = ActivityState.DISPLAYING;
+
                             try {
-                                Thread.sleep(10000);
+                                Thread.sleep(7500);
+                                if (mState != ActivityState.DISPLAYING) return;
+                                mState = ActivityState.IDLING;
                                 resetDisplayMsg("Welcome! Press the button to check-in for this event.");
                             }
                             catch (InterruptedException e) {
