@@ -18,6 +18,8 @@ package com.example.androidthings.doorbell;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.Image;
 import android.media.ImageReader;
 import android.os.Bundle;
@@ -26,6 +28,8 @@ import android.os.HandlerThread;
 import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.google.android.things.contrib.driver.button.Button;
 import com.google.android.things.contrib.driver.button.ButtonInputDriver;
@@ -36,6 +40,9 @@ import com.google.firebase.database.ServerValue;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.lang.Thread;
 
 /**
  * Doorbell activity that capture a picture from the Raspberry Pi 3
@@ -47,6 +54,10 @@ public class DoorbellActivity extends Activity {
 
     private FirebaseDatabase mDatabase;
     private DoorbellCamera mCamera;
+
+    private ImageView mImage;
+    private TextView[] mResultViews;
+    private Map<String, Float> mAnnotations;
 
     /*
      * Driver for the doorbell button;
@@ -86,6 +97,13 @@ public class DoorbellActivity extends Activity {
             return;
         }
 
+        setContentView(R.layout.activity_camera);
+        mImage = (ImageView) findViewById(R.id.imageView);
+        mResultViews = new TextView[3];
+        mResultViews[0] = (TextView) findViewById(R.id.result1);
+        mResultViews[1] = (TextView) findViewById(R.id.result2);
+        mResultViews[2] = (TextView) findViewById(R.id.result3);
+
         mDatabase = FirebaseDatabase.getInstance();
 
         // Creates new handlers and associated threads for camera and networking operations.
@@ -103,6 +121,8 @@ public class DoorbellActivity extends Activity {
         // Camera code is complicated, so we've shoved it all in this closet class for you.
         mCamera = DoorbellCamera.getInstance();
         mCamera.initializeCamera(this, mCameraHandler, mOnImageAvailableListener);
+
+        resetDisplayMsg("Welcome! Press the button to check-in for this event.");
     }
 
     private void initPIO() {
@@ -132,11 +152,27 @@ public class DoorbellActivity extends Activity {
         }
     }
 
+    /*
+     ** Reset the display with specified message.
+     */
+    private void resetDisplayMsg(final String msg) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                for (int i = 0; i < mResultViews.length; i++) {
+                    mResultViews[i].setText(null);
+                }
+                mResultViews[0].setText(msg);
+            }
+        });
+    }
+
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_ENTER) {
             // Doorbell rang!
             Log.d(TAG, "button pressed");
+            resetDisplayMsg("Capturing image ...");
             mCamera.takePicture();
             return true;
         }
@@ -151,15 +187,33 @@ public class DoorbellActivity extends Activity {
         @Override
         public void onImageAvailable(ImageReader reader) {
             Image image = reader.acquireLatestImage();
+
             // get image bytes
             ByteBuffer imageBuf = image.getPlanes()[0].getBuffer();
             final byte[] imageBytes = new byte[imageBuf.remaining()];
             imageBuf.get(imageBytes);
             image.close();
 
+            renderOnDisplay(imageBytes);
+
             onPictureTaken(imageBytes);
         }
     };
+
+    /**
+     * Render image on display.
+     */
+    private void renderOnDisplay(byte[] imageBytes) {
+        final Bitmap bitmap;
+        bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mImage.setImageBitmap(bitmap);
+            }
+        });
+    }
 
     /**
      * Handle image processing in Firebase and Cloud Vision.
@@ -172,16 +226,41 @@ public class DoorbellActivity extends Activity {
             log.child("timestamp").setValue(ServerValue.TIMESTAMP);
             log.child("image").setValue(imageStr);
 
+            resetDisplayMsg("Sending image to Google Cloud Vision API for labelling ... PLEASE WAIT.");
             mCloudHandler.post(new Runnable() {
                 @Override
                 public void run() {
                     Log.d(TAG, "sending image to cloud vision");
                     // annotate image by uploading to Cloud Vision API
                     try {
-                        Map<String, Float> annotations = CloudVisionUtils.annotateImage(imageBytes);
-                        Log.d(TAG, "cloud vision annotations:" + annotations);
-                        if (annotations != null) {
-                            log.child("annotations").setValue(annotations);
+                        mAnnotations = CloudVisionUtils.annotateImage(imageBytes);
+                        mAnnotations = Utils.rsortByValue(mAnnotations);
+                        Log.d(TAG, "cloud vision annotations:" + mAnnotations);
+                        if (mAnnotations != null) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    for (int i = 0; i < mResultViews.length; i++) {
+                                        mResultViews[i].setText(null);
+                                    }
+                                    List<String> keyList = new ArrayList<String>(mAnnotations.keySet());
+                                    for(int i = 0; i < keyList.size() && i < mResultViews.length; i++) {
+                                        String key = keyList.get(i);
+                                        float value = mAnnotations.get(key);
+                                        mResultViews[i].setText(key + ": " + value);
+                                    }
+                                }
+                            });
+
+                            log.child("annotations").setValue(mAnnotations);
+
+                            try {
+                                Thread.sleep(10000);
+                                resetDisplayMsg("Welcome! Press the button to check-in for this event.");
+                            }
+                            catch (InterruptedException e) {
+                            }
+
                         }
                     } catch (IOException e) {
                         Log.e(TAG, "Cloud Vison API error: ", e);
