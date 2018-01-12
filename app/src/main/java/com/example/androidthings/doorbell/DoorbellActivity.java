@@ -235,7 +235,7 @@ public class DoorbellActivity extends Activity {
 
             if (mState != ActivityState.IMAGING) return;
             mState = ActivityState.LABELLING;
-            resetDisplayMsg("Sending image to Google Cloud Vision API for labelling ... PLEASE WAIT.");
+            resetDisplayMsg("Sending image to Google Cloud Vision API for labelling.\nPLEASE WAIT ...");
             mCloudHandler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -256,7 +256,7 @@ public class DoorbellActivity extends Activity {
                                     for(int i = 0; i < keyList.size() && i < mResultViews.length; i++) {
                                         String key = keyList.get(i);
                                         float value = mAnnotations.get(key);
-                                        mResultViews[i].setText(key + ": " + value);
+                                        mResultViews[i].setText(key + ":\n" + value);
                                     }
                                 }
                             });
