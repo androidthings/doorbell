@@ -7,6 +7,12 @@ annotations and metadata to a Firebase database where it can be viewed by a comp
 
 ## Screenshots
 
+![Doorbell sample demo][demo-gif]
+
+[(Watch the demo on YouTube)][demo-yt]
+
+## Schematics
+
 ![Schematics](schematics.png)
 
 ## Pre-requisites
@@ -89,3 +95,6 @@ distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
 WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
 License for the specific language governing permissions and limitations under
 the License.
+
+[demo-yt]: https://www.youtube.com/watch?v=lCdlz7tk_oI&list=PLWz5rJ2EKKc-GjpNkFe9q3DhE2voJscDT&index=1
+[demo-gif]: demo1.gif
