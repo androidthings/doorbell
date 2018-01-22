@@ -67,9 +67,12 @@ public class DoorbellEntryAdapter extends FirebaseRecyclerAdapter<DoorbellEntry,
     @Override
     protected void populateViewHolder(DoorbellEntryViewHolder viewHolder, DoorbellEntry model, int position) {
         // Display the timestamp
-        CharSequence prettyTime = DateUtils.getRelativeDateTimeString(mApplicationContext,
-                model.getTimestamp(), DateUtils.SECOND_IN_MILLIS, DateUtils.WEEK_IN_MILLIS, 0);
-        viewHolder.time.setText(prettyTime);
+        Long ts = model.getTimestamp();
+        if (ts != null) {
+            CharSequence prettyTime = DateUtils.getRelativeDateTimeString(mApplicationContext,
+                    ts, DateUtils.SECOND_IN_MILLIS, DateUtils.WEEK_IN_MILLIS, 0);
+            viewHolder.time.setText(prettyTime);
+        }
 
         // Display the image
         if (model.getImage() != null) {
