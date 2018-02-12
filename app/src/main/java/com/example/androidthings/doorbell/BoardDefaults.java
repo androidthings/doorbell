@@ -18,10 +18,6 @@ package com.example.androidthings.doorbell;
 
 import android.os.Build;
 
-import com.google.android.things.pio.PeripheralManagerService;
-
-import java.util.List;
-
 @SuppressWarnings("WeakerAccess")
 public class BoardDefaults {
     private static final String DEVICE_RPI3 = "rpi3";

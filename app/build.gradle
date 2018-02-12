@@ -20,10 +20,10 @@ android {
 }
 
 dependencies {
-    compileOnly 'com.google.android.things:androidthings:0.6-devpreview'
-    implementation 'com.google.firebase:firebase-core:11.4.2'
-    implementation 'com.google.firebase:firebase-database:11.4.2'
-    implementation 'com.google.android.things.contrib:driver-button:0.3'
+    compileOnly 'com.google.android.things:androidthings:0.7-devpreview'
+    implementation 'com.google.firebase:firebase-core:11.6.0'
+    implementation 'com.google.firebase:firebase-database:11.6.0'
+    implementation 'com.google.android.things.contrib:driver-button:0.6'
 
     implementation 'com.google.apis:google-api-services-vision:v1-rev22-1.22.0'
     implementation 'com.google.api-client:google-api-client-android:1.22.0' exclude module: 'httpclient'
