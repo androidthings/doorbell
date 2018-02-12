@@ -15,15 +15,15 @@
  */
 package com.example.androidthings.doorbell;
 
-import android.app.Activity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
-public class MainActivity extends Activity {
+public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
     private DatabaseReference mDatabaseRef;
@@ -52,6 +52,7 @@ public class MainActivity extends Activity {
 
         mAdapter = new DoorbellEntryAdapter(this, mDatabaseRef);
         mRecyclerView.setAdapter(mAdapter);
+        mAdapter.startListening();
 
         // Make sure new events are visible
         mAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
@@ -68,7 +69,7 @@ public class MainActivity extends Activity {
 
         // Tear down Firebase listeners in adapter
         if (mAdapter != null) {
-            mAdapter.cleanup();
+            mAdapter.stopListening();
             mAdapter = null;
         }
     }

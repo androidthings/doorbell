@@ -20,35 +20,42 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.util.Base64;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.KeyEvent;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.things.contrib.driver.button.Button;
 import com.google.android.things.contrib.driver.button.ButtonInputDriver;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ServerValue;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
- * Doorbell activity that capture a picture from the Raspberry Pi 3
- * Camera on a button press and post it to Firebase and Google Cloud
+ * Doorbell activity that capture a picture from an Android Things
+ * camera on a button press and post it to Firebase and Google Cloud
  * Vision API.
  */
 public class DoorbellActivity extends Activity {
     private static final String TAG = DoorbellActivity.class.getSimpleName();
 
     private FirebaseDatabase mDatabase;
+    private FirebaseStorage mStorage;
     private DoorbellCamera mCamera;
 
-    /*
+    /**
      * Driver for the doorbell button;
      */
     private ButtonInputDriver mButtonInputDriver;
@@ -87,6 +94,7 @@ public class DoorbellActivity extends Activity {
         }
 
         mDatabase = FirebaseDatabase.getInstance();
+        mStorage = FirebaseStorage.getInstance();
 
         // Creates new handlers and associated threads for camera and networking operations.
         mCameraThread = new HandlerThread("CameraBackground");
@@ -162,32 +170,56 @@ public class DoorbellActivity extends Activity {
     };
 
     /**
-     * Handle image processing in Firebase and Cloud Vision.
+     * Upload image data to Firebase as a doorbell event.
      */
     private void onPictureTaken(final byte[] imageBytes) {
         if (imageBytes != null) {
             final DatabaseReference log = mDatabase.getReference("logs").push();
-            String imageStr = Base64.encodeToString(imageBytes, Base64.NO_WRAP | Base64.URL_SAFE);
-            // upload image to firebase
-            log.child("timestamp").setValue(ServerValue.TIMESTAMP);
-            log.child("image").setValue(imageStr);
+            final StorageReference imageRef = mStorage.getReference().child(log.getKey());
 
-            mCloudHandler.post(new Runnable() {
+            // upload image to storage
+            UploadTask task = imageRef.putBytes(imageBytes);
+            task.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                 @Override
-                public void run() {
-                    Log.d(TAG, "sending image to cloud vision");
-                    // annotate image by uploading to Cloud Vision API
-                    try {
-                        Map<String, Float> annotations = CloudVisionUtils.annotateImage(imageBytes);
-                        Log.d(TAG, "cloud vision annotations:" + annotations);
-                        if (annotations != null) {
-                            log.child("annotations").setValue(annotations);
-                        }
-                    } catch (IOException e) {
-                        Log.e(TAG, "Cloud Vison API error: ", e);
-                    }
+                public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                    Uri downloadUrl = taskSnapshot.getDownloadUrl();
+                    // mark image in the database
+                    Log.i(TAG, "Image upload successful");
+                    log.child("timestamp").setValue(ServerValue.TIMESTAMP);
+                    log.child("image").setValue(downloadUrl.toString());
+                    // process image annotations
+                    annotateImage(log, imageBytes);
+                }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                    // clean up this entry
+                    Log.w(TAG, "Unable to upload image to Firebase");
+                    log.removeValue();
                 }
             });
         }
+    }
+
+    /**
+     * Process image contents with Cloud Vision.
+     */
+    private void annotateImage(final DatabaseReference ref, final byte[] imageBytes) {
+        mCloudHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                Log.d(TAG, "sending image to cloud vision");
+                // annotate image by uploading to Cloud Vision API
+                try {
+                    Map<String, Float> annotations = CloudVisionUtils.annotateImage(imageBytes);
+                    Log.d(TAG, "cloud vision annotations:" + annotations);
+                    if (annotations != null) {
+                        ref.child("annotations").setValue(annotations);
+                    }
+                } catch (IOException e) {
+                    Log.e(TAG, "Cloud Vison API error: ", e);
+                }
+            }
+        });
     }
 }

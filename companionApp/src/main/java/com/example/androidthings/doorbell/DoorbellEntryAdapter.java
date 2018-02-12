@@ -16,20 +16,20 @@
 package com.example.androidthings.doorbell;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
-import android.util.Base64;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
+import com.firebase.ui.database.FirebaseRecyclerOptions;
 import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
 
@@ -57,32 +57,40 @@ public class DoorbellEntryAdapter extends FirebaseRecyclerAdapter<DoorbellEntry,
     }
 
     private Context mApplicationContext;
+    private FirebaseStorage mFirebaseStorage;
 
     public DoorbellEntryAdapter(Context context, DatabaseReference ref) {
-        super(DoorbellEntry.class, R.layout.doorbell_entry, DoorbellEntryViewHolder.class, ref);
+        super(new FirebaseRecyclerOptions.Builder<DoorbellEntry>()
+                .setQuery(ref, DoorbellEntry.class)
+                .build());
 
         mApplicationContext = context.getApplicationContext();
+        mFirebaseStorage = FirebaseStorage.getInstance();
     }
 
     @Override
-    protected void populateViewHolder(DoorbellEntryViewHolder viewHolder, DoorbellEntry model, int position) {
+    public DoorbellEntryViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View entryView = LayoutInflater.from(parent.getContext())
+                .inflate(R.layout.doorbell_entry, parent, false);
+
+        return new DoorbellEntryViewHolder(entryView);
+    }
+
+    @Override
+    protected void onBindViewHolder(DoorbellEntryViewHolder holder, int position, DoorbellEntry model) {
         // Display the timestamp
         CharSequence prettyTime = DateUtils.getRelativeDateTimeString(mApplicationContext,
                 model.getTimestamp(), DateUtils.SECOND_IN_MILLIS, DateUtils.WEEK_IN_MILLIS, 0);
-        viewHolder.time.setText(prettyTime);
+        holder.time.setText(prettyTime);
 
         // Display the image
         if (model.getImage() != null) {
-            // Decode image data encoded by the Cloud Vision library
-            byte[] imageBytes = Base64.decode(model.getImage(), Base64.NO_WRAP | Base64.URL_SAFE);
-            Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
-            if (bitmap != null) {
-                viewHolder.image.setImageBitmap(bitmap);
-            } else {
-                Drawable placeholder =
-                        ContextCompat.getDrawable(mApplicationContext, R.drawable.ic_image);
-                viewHolder.image.setImageDrawable(placeholder);
-            }
+            StorageReference imageRef = mFirebaseStorage.getReferenceFromUrl(model.getImage());
+
+            GlideApp.with(mApplicationContext)
+                    .load(imageRef)
+                    .placeholder(R.drawable.ic_image)
+                    .into(holder.image);
         }
 
         // Display the metadata
@@ -90,10 +98,9 @@ public class DoorbellEntryAdapter extends FirebaseRecyclerAdapter<DoorbellEntry,
             ArrayList<String> keywords = new ArrayList<>(model.getAnnotations().keySet());
 
             int limit = Math.min(keywords.size(), 3);
-            viewHolder.metadata.setText(TextUtils.join("\n", keywords.subList(0, limit)));
+            holder.metadata.setText(TextUtils.join("\n", keywords.subList(0, limit)));
         } else {
-            viewHolder.metadata.setText("no annotations yet");
+            holder.metadata.setText("no annotations yet");
         }
     }
-
 }
