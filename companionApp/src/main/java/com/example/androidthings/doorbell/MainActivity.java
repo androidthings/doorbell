@@ -26,8 +26,6 @@ import com.google.firebase.database.FirebaseDatabase;
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
 
-    private DatabaseReference mDatabaseRef;
-
     private RecyclerView mRecyclerView;
     private DoorbellEntryAdapter mAdapter;
 
@@ -36,22 +34,25 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Reference for doorbell events from embedded device
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference().child("logs");
+
         mRecyclerView = (RecyclerView) findViewById(R.id.doorbellView);
         // Show most recent items at the top
         LinearLayoutManager layoutManager =
                 new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, true);
         mRecyclerView.setLayoutManager(layoutManager);
 
-        // Reference for doorbell events from embedded device
-        mDatabaseRef = FirebaseDatabase.getInstance().getReference().child("logs");
+        // Initialize RecyclerView adapter
+        mAdapter = new DoorbellEntryAdapter(this, ref);
+        mRecyclerView.setAdapter(mAdapter);
     }
 
     @Override
     public void onStart() {
         super.onStart();
 
-        mAdapter = new DoorbellEntryAdapter(this, mDatabaseRef);
-        mRecyclerView.setAdapter(mAdapter);
+        // Initialize Firebase listeners in adapter
         mAdapter.startListening();
 
         // Make sure new events are visible
@@ -68,10 +69,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
 
         // Tear down Firebase listeners in adapter
-        if (mAdapter != null) {
-            mAdapter.stopListening();
-            mAdapter = null;
-        }
+        mAdapter.stopListening();
     }
 
 }
