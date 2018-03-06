@@ -20,9 +20,8 @@ annotations and metadata to a Firebase database where it can be viewed by a comp
 - Android Things compatible board
 - Android Things compatible camera (for example, the Raspberry Pi 3 camera module)
 - Android Studio 2.2+
-- "Google Repository" from the Android SDK Manager
 - Google Cloud project with Cloud Vision API enabled
-- Firebase database
+- Firebase project with Database and Storage
 - The following individual components:
     - 1 push button
     - 1 resistor
@@ -33,17 +32,40 @@ annotations and metadata to a Firebase database where it can be viewed by a comp
 
 To setup, follow these steps below.
 
-1. Add a valid Google Cloud Vision API key in the constant `CloudVisionUtils.CLOUD_VISION_API_KEY`
- - Create a Google Cloud Platform (GCP) project on [GCP Console](https://console.cloud.google.com/)
- - Enable Cloud Vision API under Library
- - Add an API key under Credentials
- - Copy and paste the Cloud Vision API key to the constant in `CloudVisionUtils.java`
+1.  Add a valid Google Cloud Vision API key in the constant `CloudVisionUtils.CLOUD_VISION_API_KEY`
+  - Create a Google Cloud Platform (GCP) project on [GCP Console](https://console.cloud.google.com/)
+  - Enable Cloud Vision API under Library
+  - Add an API key under Credentials
+  - Copy and paste the Cloud Vision API key to the constant in `CloudVisionUtils.java`
 
-2. Add a valid `google-services.json` from Firebase to `app/` and
-   `companionApp/`
- - Create a Firebase project on [Firebase Console](https://console.firebase.google.com)
- - Add an Android app with your specific package name in the project
- - Download the auto-generated `google-services.json` and save to `app/` and `companionApp/` folders
+2.  Add a valid `google-services.json` from Firebase to `app/` and
+    `companionApp/`
+  - Create a Firebase project on [Firebase Console](https://console.firebase.google.com)
+  - Add an Android app with your specific package name in the project
+  - Download the auto-generated `google-services.json` and save to `app/` and `companionApp/` folders
+
+3.  Ensure the security rules for your Firebase project allow public read/write
+    access. **Note:** The rules in this section are set to public read/write for
+    demonstration purposes only.
+  - Firebase -> Database -> Rules:
+
+          {
+            "rules": {
+              ".read": true,
+              ".write": true
+            }
+          }
+
+  - Firebase -> Storage -> Rules:
+
+          service firebase.storage {
+            match /b/{bucket}/o {
+              match /{allPaths=**} {
+                allow read, write;
+              }
+            }
+          }
+
 
 There are two modules: `app` and `companionApp`, the former is on device while the latter on
 companion device e.g. Android phone.
