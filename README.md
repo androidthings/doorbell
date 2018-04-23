@@ -1,4 +1,4 @@
-# Android Things Doorbell sample
+# Cloud Doorbell
 
 The Android Things Doorbell sample demonstrates how to create a “smart” doorbell.
 The sample captures a button press from a user, obtains an image via a camera peripheral,
@@ -86,18 +86,6 @@ To run the `companionApp` module on your Android phone:
 
 1. Deploy and run the `companionApp` module
 2. Verify that you see a new annotated picture every time you push the button
-
-## Categories
-
-- Android Things
-
-## Solutions
-
-- IoT
-
-## Languages
-
-- Java
 
 ## Enable auto-launch behavior
 
