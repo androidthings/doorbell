@@ -23,7 +23,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-core:11.6.0'
     implementation 'com.google.firebase:firebase-database:11.6.0'
     implementation 'com.google.firebase:firebase-storage:11.6.0'
-    implementation 'com.google.android.things.contrib:driver-button:0.7'
+    implementation 'com.google.android.things.contrib:driver-button:1.0'
 
     implementation 'com.google.apis:google-api-services-vision:v1-rev22-1.22.0'
     implementation 'com.google.api-client:google-api-client-android:1.22.0' exclude module: 'httpclient'
