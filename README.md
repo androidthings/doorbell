@@ -5,6 +5,10 @@ The sample captures a button press from a user, obtains an image via a camera pe
 processes the image data using Google’s Cloud Vision API, and uploads the image, Cloud Vision
 annotations and metadata to a Firebase database where it can be viewed by a companion app.
 
+> **Note:** The Android Things Console will be turned down for non-commercial
+> use on January 5, 2022. For more details, see the
+> [FAQ page](https://developer.android.com/things/faq).
+
 ## Screenshots
 
 ![Doorbell sample demo][demo-gif]
